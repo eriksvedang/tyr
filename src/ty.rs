@@ -2,8 +2,8 @@
 pub enum Ty {
     Var(String),
     Function(Vec<Ty>, Box<Ty>), // TODO: support type variable constraints
-    Parameterized(ConcreteTypeId, Vec<Ty>),
-    Concrete(ConcreteTypeId),
+    Parameterized(TypeId, Vec<Ty>),
+    Concrete(TypeId),
 }
 
 impl Ty {
@@ -20,6 +20,6 @@ pub enum Kind {
 
 /// The consumer of the library is free to map their concrete types
 /// (e.g. 'i32', or 'String') to any Id they see fit - or they
-/// can use the tyr::ConcreteTypeMapper for convenience.
+/// can use the tyr::TypeMapper for convenience.
 #[derive(Debug, Clone)]
-pub struct ConcreteTypeId(pub usize);
+pub struct TypeId(pub usize);
