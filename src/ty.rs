@@ -1,14 +1,21 @@
 #[derive(Debug, Clone)]
 pub enum Ty {
     Var(String),
-    Function(Vec<Ty>, Box<Ty>), // TODO: support type variable constraints
-    Parameterized(TypeId, Vec<Ty>),
-    Concrete(TypeId),
+    Func(Vec<Ty>, Box<Ty>), // TODO: support type variable constraints
+    Data(TypeId, Vec<Ty>),
 }
 
 impl Ty {
-    pub fn kind(&self) -> Kind {
-        todo!()
+    pub fn is_var(&self) -> bool {
+        matches!(self, Ty::Var(..))
+    }
+
+    pub fn kind(&self) -> Option<Kind> {
+        match self {
+            Ty::Var(_) => None,
+            Ty::Func(_, _) => Some(Kind::Type), // ?
+            Ty::Data(_, _) => todo!(),
+        }
     }
 }
 
@@ -19,7 +26,7 @@ pub enum Kind {
 }
 
 /// The consumer of the library is free to map their concrete types
-/// (e.g. 'i32', or 'String') to any Id they see fit - or they
+/// (e.g. 'f32', or 'String') to any Id they see fit - or they
 /// can use the tyr::TypeMapper for convenience.
 #[derive(Debug, Clone)]
 pub struct TypeId(pub usize);
