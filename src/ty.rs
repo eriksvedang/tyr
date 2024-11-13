@@ -15,6 +15,7 @@ impl Ty {
 pub enum Kind {
     Type,
     Arrow(Box<Kind>, Box<Kind>),
+    // Type variable constraint goes here?!
 }
 
 /// The consumer of the library is free to map their concrete types
