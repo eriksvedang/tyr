@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Ty {
     Var(String),
@@ -15,6 +17,22 @@ impl Ty {
             Ty::Var(_) => None,
             Ty::Func(_, _) => Some(Kind::Type), // ?
             Ty::Data(_, _) => todo!(),
+        }
+    }
+}
+
+impl Display for Ty {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Ty::Var(name) => write!(f, "{}", name),
+            Ty::Func(in_ty, out_ty) => write!(f, "{in_ty} -> {out_ty}"),
+            Ty::Data(type_index, type_parameters) => {
+                write!(f, "{type_index:?}")?;
+                for ty_param in type_parameters {
+                    write!(f, " {ty_param}")?;
+                }
+                Ok(())
+            }
         }
     }
 }

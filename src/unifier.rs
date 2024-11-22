@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use crate::ty::Ty;
+use crate::{ty::Ty, unification_error::UnificationError};
 
 #[derive(Debug, Clone)]
 pub struct Unifier {
@@ -22,21 +22,42 @@ impl Unifier {
         self.constraints.push(constraint);
     }
 
-    pub fn solve(&mut self) -> Result<(), ()> {
-        // TODO: fix cloning
-        for constraint in self.constraints.clone() {
-            self.solve_one(&constraint.a, &constraint.b)?;
-            self.solve_one(&constraint.b, &constraint.a)?;
+    pub fn solve(&mut self) -> Result<(), UnificationError> {
+        for constraint in &self.constraints {
+            Self::solve_one(&mut self.solved_variables, &constraint.a, &constraint.b)?;
+            Self::solve_one(&mut self.solved_variables, &constraint.b, &constraint.a)?;
         }
 
         Ok(())
     }
 
-    fn solve_one(&mut self, a: &Ty, b: &Ty) -> Result<(), ()> {
+    fn solve_one(vars: &mut HashMap<String, Ty>, a: &Ty, b: &Ty) -> Result<(), UnificationError> {
         match a {
-            Ty::Var(name) => _ = self.solved_variables.insert(name.to_string(), b.clone()),
-            Ty::Func(_, _) => (),
-            Ty::Data(_, _) => (),
+            Ty::Var(a_name) => _ = vars.insert(a_name.to_string(), b.clone()),
+            Ty::Func(a_in, a_out) => match b {
+                Ty::Var(_) => (),
+                Ty::Func(b_in, b_out) => {
+                    Self::solve_one(vars, a_in, b_in)?;
+                    Self::solve_one(vars, a_out, b_out)?;
+                }
+                Ty::Data(_, _) => return Err(UnificationError::CannotUnify(a.clone(), b.clone())),
+            },
+            Ty::Data(a_type_id, a_type_parameters) => match b {
+                Ty::Var(_) => (),
+                Ty::Func(_, _) => return Err(UnificationError::CannotUnify(a.clone(), b.clone())),
+                Ty::Data(b_type_id, b_type_parameters) => {
+                    if a_type_id == b_type_id {
+                        for (a_parameter, b_parameter) in
+                            a_type_parameters.iter().zip(b_type_parameters.iter())
+                        {
+                            Self::solve_one(vars, a_parameter, b_parameter)?;
+                            Self::solve_one(vars, b_parameter, a_parameter)?;
+                        }
+                    } else {
+                        return Err(UnificationError::CannotUnify(a.clone(), b.clone()));
+                    }
+                }
+            },
         }
 
         Ok(())
@@ -56,34 +77,5 @@ pub struct Constraint {
 impl Constraint {
     pub fn new(a: Ty, b: Ty) -> Self {
         Self { a, b }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::ty::TypeId;
-
-    use super::*;
-
-    #[test]
-    fn unify_var_with_concrete_type() {
-        let mut unifier = Unifier::new();
-        unifier.add_constraint(Constraint::new(
-            Ty::Var("a".to_string()),
-            Ty::Data(TypeId(0), vec![]),
-        ));
-        _ = unifier.solve();
-        assert_eq!(unifier.get_solved("a"), Some(&Ty::Data(TypeId(0), vec![])));
-    }
-
-    #[test]
-    fn unify_var_with_concrete_type_other_direction() {
-        let mut unifier = Unifier::new();
-        unifier.add_constraint(Constraint::new(
-            Ty::Data(TypeId(0), vec![]),
-            Ty::Var("a".to_string()),
-        ));
-        _ = unifier.solve();
-        assert_eq!(unifier.get_solved("a"), Some(&Ty::Data(TypeId(0), vec![])));
     }
 }
