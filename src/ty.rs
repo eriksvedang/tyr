@@ -1,7 +1,7 @@
 #[derive(Debug, Clone, PartialEq)]
 pub enum Ty {
     Var(String),
-    Func(Vec<Ty>, Box<Ty>), // TODO: support type variable constraints
+    Func(Box<Ty>, Box<Ty>), // TODO: support type variable constraints
     Data(TypeId, Vec<Ty>),
 }
 

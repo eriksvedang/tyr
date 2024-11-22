@@ -25,19 +25,16 @@ impl Unifier {
     pub fn solve(&mut self) -> Result<(), ()> {
         // TODO: fix cloning
         for constraint in self.constraints.clone() {
-            self.solve_one(&constraint)?;
+            self.solve_one(&constraint.a, &constraint.b)?;
+            self.solve_one(&constraint.b, &constraint.a)?;
         }
 
         Ok(())
     }
 
-    fn solve_one(&mut self, constraint: &Constraint) -> Result<(), ()> {
-        match &constraint.a {
-            Ty::Var(name) => {
-                _ = self
-                    .solved_variables
-                    .insert(name.to_string(), constraint.b.clone())
-            }
+    fn solve_one(&mut self, a: &Ty, b: &Ty) -> Result<(), ()> {
+        match a {
+            Ty::Var(name) => _ = self.solved_variables.insert(name.to_string(), b.clone()),
             Ty::Func(_, _) => (),
             Ty::Data(_, _) => (),
         }
@@ -74,6 +71,17 @@ mod tests {
         unifier.add_constraint(Constraint::new(
             Ty::Var("a".to_string()),
             Ty::Data(TypeId(0), vec![]),
+        ));
+        _ = unifier.solve();
+        assert_eq!(unifier.get_solved("a"), Some(&Ty::Data(TypeId(0), vec![])));
+    }
+
+    #[test]
+    fn unify_var_with_concrete_type_other_direction() {
+        let mut unifier = Unifier::new();
+        unifier.add_constraint(Constraint::new(
+            Ty::Data(TypeId(0), vec![]),
+            Ty::Var("a".to_string()),
         ));
         _ = unifier.solve();
         assert_eq!(unifier.get_solved("a"), Some(&Ty::Data(TypeId(0), vec![])));
