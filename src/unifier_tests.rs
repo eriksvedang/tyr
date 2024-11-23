@@ -9,10 +9,10 @@ mod tests {
         let mut unifier = Unifier::new();
         unifier.add_constraint(Constraint::new(
             Ty::Var("a".to_string()),
-            Ty::Data(TypeId(0), vec![]),
+            Ty::Data(TypeId(1), vec![]),
         ));
         _ = unifier.solve();
-        assert_eq!(unifier.get_solved("a"), Some(&Ty::Data(TypeId(0), vec![])));
+        assert_eq!(unifier.get_solved("a"), Some(&Ty::Data(TypeId(1), vec![])));
     }
 
     #[test]
@@ -24,6 +24,25 @@ mod tests {
         ));
         _ = unifier.solve();
         assert_eq!(unifier.get_solved("a"), Some(&Ty::Data(TypeId(0), vec![])));
+    }
+
+    #[test]
+    fn unify_vars_in_succession() {
+        let mut unifier = Unifier::new();
+        unifier.add_constraint(Constraint::new(
+            Ty::Var("a".to_string()),
+            Ty::Var("b".to_string()),
+        ));
+        unifier.add_constraint(Constraint::new(
+            Ty::Var("b".to_string()),
+            Ty::Var("c".to_string()),
+        ));
+        unifier.add_constraint(Constraint::new(
+            Ty::Var("c".to_string()),
+            Ty::Data(TypeId(1), vec![]),
+        ));
+        _ = unifier.solve();
+        assert_eq!(unifier.get_solved("a"), Some(&Ty::Data(TypeId(1), vec![])));
     }
 
     #[test]

@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
-use std::collections::{HashMap, HashSet};
-
 use crate::{ty::Ty, unification_error::UnificationError};
+use log::*;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone)]
 pub struct Unifier {
@@ -28,13 +28,15 @@ impl Unifier {
             Self::solve_one(&mut self.solved_variables, &constraint.b, &constraint.a)?;
         }
 
+        debug!("Done solving: {:#?}", self.solved_variables);
+
         Ok(())
     }
 
     fn solve_one(vars: &mut HashMap<String, Ty>, a: &Ty, b: &Ty) -> Result<(), UnificationError> {
         match a {
             Ty::Var(a_name) => {
-                Self::insert_solved_variable(vars, a_name.clone(), Self::resolve(vars, b).clone())?;
+                vars.insert(a_name.clone(), b.clone());
             }
             Ty::Func(a_in, a_out) => match b {
                 Ty::Var(_) => (),
@@ -65,27 +67,15 @@ impl Unifier {
         Ok(())
     }
 
-    // Insert the value of the solved variable while also substituting any existing
-    // variables that resolve to that same variable
-    fn insert_solved_variable(
-        vars: &mut HashMap<String, Ty>,
-        var_name: String,
-        resolved_ty: Ty,
-    ) -> Result<(), UnificationError> {
-        vars.insert(var_name, resolved_ty);
-
-        //for (k, v) in vars {}
-
-        Ok(())
-    }
-
-    fn resolve<'a>(vars: &'a HashMap<String, Ty>, type_variable: &'a Ty) -> &'a Ty {
+    /// Type variables are resolved by following their chain of associations in `vars`.
+    /// Non-type variables just resolve to themselves.
+    fn fully_resolve<'a>(vars: &'a HashMap<String, Ty>, type_variable: &'a Ty) -> &'a Ty {
         if !type_variable.is_var() {
             return type_variable;
         }
 
         let mut visited = HashSet::new();
-        let mut resolved_to = type_variable; // resolves to itself, if nothing else is found
+        let mut resolved_to = type_variable;
         visited.insert(resolved_to);
 
         loop {
