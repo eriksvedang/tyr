@@ -28,27 +28,37 @@ impl Unifier {
             Self::solve_one(&mut self.solved_variables, &constraint.b, &constraint.a)?;
         }
 
+        for (k, v) in self.solved_variables.clone().iter() {
+            let resolved = Self::fully_resolve(&self.solved_variables, v);
+            self.solved_variables.insert(k.clone(), resolved.clone());
+        }
+
         debug!("Done solving: {:#?}", self.solved_variables);
 
         Ok(())
     }
 
     fn solve_one(vars: &mut HashMap<String, Ty>, a: &Ty, b: &Ty) -> Result<(), UnificationError> {
-        match a {
+        let fully_resolved_b = Self::fully_resolve(vars, b).clone();
+        match &Self::fully_resolve(vars, a).clone() {
             Ty::Var(a_name) => {
-                vars.insert(a_name.clone(), b.clone());
+                vars.insert(a_name.clone(), fully_resolved_b);
             }
-            Ty::Func(a_in, a_out) => match b {
+            Ty::Func(a_in, a_out) => match &fully_resolved_b {
                 Ty::Var(_) => (),
                 Ty::Func(b_in, b_out) => {
                     Self::solve_one(vars, a_in, b_in)?;
                     Self::solve_one(vars, a_out, b_out)?;
                 }
-                Ty::Data(_, _) => return Err(UnificationError::CannotUnify(a.clone(), b.clone())),
+                Ty::Data(_, _) => {
+                    return Err(UnificationError::CannotUnify(a.clone(), fully_resolved_b))
+                }
             },
-            Ty::Data(a_type_id, a_type_parameters) => match b {
+            Ty::Data(a_type_id, a_type_parameters) => match &fully_resolved_b {
                 Ty::Var(_) => (),
-                Ty::Func(_, _) => return Err(UnificationError::CannotUnify(a.clone(), b.clone())),
+                Ty::Func(_, _) => {
+                    return Err(UnificationError::CannotUnify(a.clone(), fully_resolved_b))
+                }
                 Ty::Data(b_type_id, b_type_parameters) => {
                     if a_type_id == b_type_id {
                         for (a_parameter, b_parameter) in
@@ -58,7 +68,7 @@ impl Unifier {
                             Self::solve_one(vars, b_parameter, a_parameter)?;
                         }
                     } else {
-                        return Err(UnificationError::CannotUnify(a.clone(), b.clone()));
+                        return Err(UnificationError::CannotUnify(a.clone(), fully_resolved_b));
                     }
                 }
             },
