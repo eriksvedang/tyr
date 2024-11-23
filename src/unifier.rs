@@ -39,8 +39,10 @@ impl Unifier {
     }
 
     fn solve_one(vars: &mut HashMap<String, Ty>, a: &Ty, b: &Ty) -> Result<(), UnificationError> {
+        let fully_resolved_a = Self::fully_resolve(vars, a).clone();
         let fully_resolved_b = Self::fully_resolve(vars, b).clone();
-        match &Self::fully_resolve(vars, a).clone() {
+
+        match &fully_resolved_a {
             Ty::Var(a_name) => {
                 vars.insert(a_name.clone(), fully_resolved_b);
             }
