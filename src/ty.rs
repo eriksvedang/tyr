@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Ty {
     Var(String),
     Func(Box<Ty>, Box<Ty>), // TODO: support type variable constraints
@@ -46,5 +46,5 @@ pub enum Kind {
 /// The consumer of the library is free to map their concrete types
 /// (e.g. 'f32', or 'String') to any Id they see fit - or they
 /// can use the tyr::TypeMapper for convenience.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TypeId(pub usize);

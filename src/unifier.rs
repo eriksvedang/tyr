@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crate::{ty::Ty, unification_error::UnificationError};
 
@@ -33,7 +33,9 @@ impl Unifier {
 
     fn solve_one(vars: &mut HashMap<String, Ty>, a: &Ty, b: &Ty) -> Result<(), UnificationError> {
         match a {
-            Ty::Var(a_name) => _ = vars.insert(a_name.to_string(), b.clone()),
+            Ty::Var(a_name) => {
+                Self::insert_solved_variable(vars, a_name.clone(), Self::resolve(vars, b).clone())?;
+            }
             Ty::Func(a_in, a_out) => match b {
                 Ty::Var(_) => (),
                 Ty::Func(b_in, b_out) => {
@@ -61,6 +63,48 @@ impl Unifier {
         }
 
         Ok(())
+    }
+
+    // Insert the value of the solved variable while also substituting any existing
+    // variables that resolve to that same variable
+    fn insert_solved_variable(
+        vars: &mut HashMap<String, Ty>,
+        var_name: String,
+        resolved_ty: Ty,
+    ) -> Result<(), UnificationError> {
+        vars.insert(var_name, resolved_ty);
+
+        //for (k, v) in vars {}
+
+        Ok(())
+    }
+
+    fn resolve<'a>(vars: &'a HashMap<String, Ty>, type_variable: &'a Ty) -> &'a Ty {
+        if !type_variable.is_var() {
+            return type_variable;
+        }
+
+        let mut visited = HashSet::new();
+        let mut resolved_to = type_variable; // resolves to itself, if nothing else is found
+        visited.insert(resolved_to);
+
+        loop {
+            match resolved_to {
+                Ty::Var(var_name) => {
+                    if let Some(found) = vars.get(var_name) {
+                        if visited.contains(found) {
+                            return found;
+                        } else {
+                            visited.insert(found);
+                            resolved_to = found;
+                        }
+                    } else {
+                        return resolved_to;
+                    }
+                }
+                non_variable => return non_variable,
+            }
+        }
     }
 
     pub fn get_solved(&self, variable_name: &str) -> Option<&Ty> {
