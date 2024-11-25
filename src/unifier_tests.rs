@@ -41,6 +41,21 @@ mod tests {
     }
 
     #[test]
+    fn unify_really_long_chain() {
+        let mut unifier = Unifier::new();
+        unifier.add_constraint(Constraint::new(Ty::var("e"), Ty::var("f")));
+        unifier.add_constraint(Constraint::new(Ty::var("a"), Ty::var("b")));
+        unifier.add_constraint(Constraint::new(Ty::var("f"), Ty::var("g")));
+        unifier.add_constraint(Constraint::new(Ty::var("c"), Ty::var("d")));
+        unifier.add_constraint(Constraint::new(Ty::var("h"), Ty::id(1)));
+        unifier.add_constraint(Constraint::new(Ty::var("b"), Ty::var("c")));
+        unifier.add_constraint(Constraint::new(Ty::var("g"), Ty::var("h")));
+        unifier.add_constraint(Constraint::new(Ty::var("d"), Ty::var("e")));
+        assert!(unifier.solve().is_ok());
+        assert_eq!(unifier.get_solved("a"), Some(&Ty::id(1)));
+    }
+
+    #[test]
     fn fail_to_unify_data_with_func() {
         let mut unifier = Unifier::new();
         unifier.add_constraint(Constraint::new(
