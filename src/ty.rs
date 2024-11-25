@@ -16,6 +16,10 @@ impl Ty {
         Ty::Var(name.to_string())
     }
 
+    pub fn fun(a: Ty, b: Ty) -> Ty {
+        Ty::Func(Box::new(a), Box::new(b))
+    }
+
     pub fn id(type_id: usize) -> Ty {
         Ty::Data(TypeId(type_id), vec![])
     }

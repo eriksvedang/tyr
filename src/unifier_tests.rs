@@ -56,6 +56,33 @@ mod tests {
     }
 
     #[test]
+    fn unify_binary_functions() {
+        let mut unifier = Unifier::new();
+        // Unify 'a -> #2 -> c' with '#1 -> b -> #3'
+        unifier.add_constraint(Constraint::new(
+            Ty::fun(Ty::var("a"), Ty::fun(Ty::id(2), Ty::var("c"))),
+            Ty::fun(Ty::id(1), Ty::fun(Ty::var("b"), Ty::id(3))),
+        ));
+        assert!(unifier.solve().is_ok());
+        assert_eq!(unifier.get_solved("a"), Some(&Ty::id(1)));
+        assert_eq!(unifier.get_solved("b"), Some(&Ty::id(2)));
+        assert_eq!(unifier.get_solved("c"), Some(&Ty::id(3)));
+    }
+
+    #[test]
+    fn unify_data_type_args() {
+        let mut unifier = Unifier::new();
+        // Unify '(#1 a #3)' with '(#1 #2 b)'
+        unifier.add_constraint(Constraint::new(
+            Ty::Data(TypeId(1), vec![Ty::var("a"), Ty::id(3)]),
+            Ty::Data(TypeId(1), vec![Ty::id(2), Ty::var("b")]),
+        ));
+        assert!(unifier.solve().is_ok());
+        assert_eq!(unifier.get_solved("a"), Some(&Ty::id(2)));
+        assert_eq!(unifier.get_solved("b"), Some(&Ty::id(3)));
+    }
+
+    #[test]
     fn fail_to_unify_data_with_func() {
         let mut unifier = Unifier::new();
         unifier.add_constraint(Constraint::new(
