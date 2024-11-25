@@ -12,6 +12,14 @@ impl Ty {
         matches!(self, Ty::Var(..))
     }
 
+    pub fn var(name: &str) -> Ty {
+        Ty::Var(name.to_string())
+    }
+
+    pub fn id(type_id: usize) -> Ty {
+        Ty::Data(TypeId(type_id), vec![])
+    }
+
     pub fn kind(&self) -> Option<Kind> {
         match self {
             Ty::Var(_) => None,

@@ -33,7 +33,7 @@ impl Unifier {
             self.solved_variables.insert(k.clone(), resolved.clone());
         }
 
-        debug!("Done solving: {:#?}", self.solved_variables);
+        debug!("Done solving:\n{:#?}", self.solved_variables);
 
         Ok(())
     }
