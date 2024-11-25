@@ -81,13 +81,13 @@ impl Unifier {
 
     /// Type variables are resolved by following their chain of associations in `vars`.
     /// Non-type variables just resolve to themselves.
-    fn fully_resolve<'a>(vars: &'a HashMap<String, Ty>, type_variable: &'a Ty) -> &'a Ty {
-        if !type_variable.is_var() {
-            return type_variable;
+    fn fully_resolve<'a>(vars: &'a HashMap<String, Ty>, ty: &'a Ty) -> &'a Ty {
+        if !ty.is_var() {
+            return ty;
         }
 
         let mut visited = HashSet::new();
-        let mut resolved_to = type_variable;
+        let mut resolved_to = ty;
         visited.insert(resolved_to);
 
         loop {
